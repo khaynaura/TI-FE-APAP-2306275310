@@ -1,4 +1,7 @@
 @import './base.css';
+@import "tailwindcss";
+@plugin "flowbite/plugin";
+@source "../node_modules/flowbite";
 
 /* ===== Reset layout template Vite ===== */
 html, body, #app { height: 100%; }

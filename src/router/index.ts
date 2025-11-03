@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import InsuranceView from '@/views/insurances/InsurancePlanList.vue'
+import CreateInsuranceView from '@/views/insurances/CreateInsuranceView.vue'
+import ReadInsuranceDetailView from '@/views/insurances/ReadInsuranceDetail.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,8 +15,17 @@ const router = createRouter({
     {
       path: '/insurance-plan',
       name: 'insurance-plan-list',
-      // Lazy-load halaman agar lebih cepat
       component: InsuranceView
+    },
+    {
+      path: '/insurance-plan/create',
+      name: 'insurance-plan-create',
+      component: CreateInsuranceView
+    },
+    {
+      path: '/insurance-plan/:id',
+      name: 'insurance-plan-detail',
+      component: ReadInsuranceDetailView
     },
     // // Rute lain untuk Policy, Claim, dll. akan ditambahkan di sini
     // {

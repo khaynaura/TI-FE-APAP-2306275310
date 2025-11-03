@@ -1,96 +1,250 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch, onUnmounted, h } from 'vue';
+import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { toast } from 'vue-sonner';
+import type { ColumnDef } from '@tanstack/vue-table';
 import { useInsurancePlanStore } from '@/stores/insurances/insurances.stores';
 import VDataTable from '@/components/common/VDataTable.vue';
 import VButton from '@/components/common/VButton.vue';
-import { useRouter } from 'vue-router';
-import { formatRupiah } from '@/utils/formatter.ts';
 
-const insurancePlanStore = useInsurancePlanStore();
+// --- Inisialisasi Store dan Router ---
 const router = useRouter();
+const planStore = useInsurancePlanStore();
+const { plans } = storeToRefs(planStore);
 
+// --- State Halaman ---
 const searchQuery = ref('');
+const isLoading = ref(false); // Tambahan: untuk loading state
 
-// Load dari backend
-onMounted(async () => {
-  await insurancePlanStore.fetchPlans();
-});
-
-const tableHeaders = [
-  'ID',
-  'Provider ID',
-  'Plan Name',
-  'Price',
-  'Coverage',
-  'Applicable Services',
-  'Duration',
-  'Actions',
-];
-
-const handleSearchUpdate = (search: string) => {
-  searchQuery.value = search;
-  insurancePlanStore.fetchPlans(search); // trigger pencarian ke backend
+// --- Helpers untuk Formatting ---
+const formatCurrency = (value: unknown) => {
+  const n = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+  if (!Number.isFinite(n)) return '-';
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+  }).format(n);
 };
 
-const goToCreatePage = () => {
+const formatDuration = (days?: number) => {
+  if (!Number.isFinite(days as number)) return '-';
+  const d = Number(days);
+  return `${d} ${d === 1 ? 'day' : 'days'}`;
+};
+
+// Helper function to format service names
+const formatServiceName = (service: string) => {
+  return service
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+// --- Navigasi ---
+const goToAddPlan = () => {
   router.push('/insurance-plan/create');
 };
-
-const goToDetailPage = (id: string) => {
+const goToViewPlan = (id: string) => {
   router.push(`/insurance-plan/${id}`);
 };
-
-const goToEditPage = (id: string) => {
-  router.push(`/insurance-plan/${id}/update`);
+const goToEditPlan = (id: string) => {
+  router.push(`/insurance-plan/update/${id}`);
 };
 
-async function handleDelete(id: string) {
-  const ok = confirm('Yakin ingin menghapus plan ini?');
-  if (!ok) return;
-  await insurancePlanStore.deletePlan(id);
-}
+// --- Definisi Columns untuk TanStack Table ---
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const columns: ColumnDef<any>[] = [
+  {
+    accessorKey: 'id',
+    header: 'ID',
+    cell: (info) => h('span', { class: 'text-sm font-medium' }, String(info.getValue() ?? '')),
+    size: 80,
+  },
+  {
+    accessorKey: 'providerId',
+    header: 'PROVIDER ID',
+    cell: (info) => h('span', { class: 'text-sm' }, String(info.getValue() ?? '')),
+    size: 120,
+  },
+  {
+    accessorKey: 'planName',
+    header: 'PLAN NAME',
+    cell: (info) => h('span', { class: 'text-sm font-semibold' }, String(info.getValue() ?? '')),
+    size: 180,
+  },
+  {
+    accessorKey: 'price',
+    header: 'PRICE',
+    cell: (info) => {
+      const value = info.getValue();
+      const formatted = formatCurrency(value);
+      return h('span', { class: 'font-medium text-green-600 text-sm' }, formatted);
+    },
+    size: 130,
+  },
+  {
+    accessorKey: 'coverage',
+    header: 'COVERAGE',
+    cell: (info) => {
+      const value = info.getValue();
+      const formatted = formatCurrency(value);
+      return h('span', { class: 'font-medium text-blue-600 text-sm' }, formatted);
+    },
+    size: 140,
+  },
+  {
+    accessorKey: 'applicableService',
+    header: 'APPLICABLE SERVICES',
+    cell: (info) => {
+      const value = info.getValue();
+      let text = '-';
+      if (Array.isArray(value) && value.length > 0) {
+        text = value.map(service => formatServiceName(service.toString())).join(', ');
+      } else if (typeof value === 'string' && value.trim()) {
+        text = formatServiceName(value);
+      }
+      return h('span', { class: 'text-sm' }, text);
+    },
+    size: 200,
+  },
+  {
+    accessorKey: 'expiredByDays',
+    header: 'DURATION',
+    cell: (info) => {
+      const raw = info.getValue();
+      const days = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : undefined;
+      const formatted = formatDuration(days);
+      return h('span', { class: 'text-sm' }, formatted);
+    },
+    size: 100,
+  },
+  {
+    id: 'actions',
+    header: 'ACTIONS',
+    cell: (info) => {
+      const item = info.row.original;
+      return h('div', { class: 'flex justify-center gap-2' }, [
+        h(
+          VButton,
+          {
+            variant: 'outline-green',
+            size: 'sm',
+            onClick: () => goToViewPlan(item.id),
+          },
+          { default: () => 'View' }
+        ),
+        h(
+          VButton,
+          {
+            variant: 'outline-blue',
+            size: 'sm',
+            onClick: () => goToEditPlan(item.id),
+          },
+          { default: () => 'Edit' }
+        ),
+      ]);
+    },
+    size: 140,
+  },
+];
+
+// --- Logika ---
+const fetchData = async () => {
+  isLoading.value = true;
+  try {
+    await planStore.fetchPlans(searchQuery.value);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    console.error('Error fetching plans:', err);
+    toast.error(err?.message || 'Failed to fetch plans');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchData();
+});
+
+// Debounce untuk search
+let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+watch(searchQuery, () => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    fetchData();
+  }, 300);
+});
+
+onUnmounted(() => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+});
 </script>
 
+// ...existing code...
 <template>
-  <div class="container mx-auto p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-extrabold text-gray-900">Insurance Plans</h1>
-      <VButton variant="primary" @click="goToCreatePage">
-        + Add New Plan
-      </VButton>
-    </div>
+  <div class="w-full min-h-screen bg-white">
+    <div class="px-6 md:px-8 py-6">
+      <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
+        <div>
+          <h1 class="text-3xl font-extrabold text-gray-900 title-bold">Insurance Plans</h1>
+          <p class="text-md text-gray-600 font-semibold">Manage and monitor all insurance plans available for travelers</p>
+        </div>
+        <VButton variant="primary" @click="goToAddPlan" class="whitespace-nowrap">
+          <span class="mr-2">+</span>
+          Add New Plan
+        </VButton>
+      </div>
 
-    <p class="text-gray-600 mb-6">Manage and monitor insurance plans available for travelers.</p>
-
-    <VDataTable
-      :items="insurancePlanStore.plans"
-      :headers="tableHeaders"
-      table-title="Daftar Insurance Plan"
-      :loading="insurancePlanStore.loading"
-      :per-page-options="[10, 25, 50]"
-      @update:search="handleSearchUpdate"
-    >
-      <template #body="{ items }">
-        <tr v-for="plan in items" :key="plan.id" class="hover:bg-gray-50">
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ plan.id }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ plan.providerId }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ plan.planName }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">{{ formatRupiah(plan.price) }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold">{{ formatRupiah(plan.coverage) }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            <span v-if="plan.applicableService?.length">{{ plan.applicableService.join(', ') }}</span>
-            <span v-else>-</span>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ plan.expiredByDays }} days</td>
-          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <div class="flex gap-2 justify-end">
-              <VButton variant="link" @click="goToDetailPage(plan.id)">View</VButton>
-              <VButton variant="link" class="text-yellow-600" @click="goToEditPage(plan.id)">Edit</VButton>
-              <VButton variant="link" class="text-red-600" @click="handleDelete(plan.id)">Delete</VButton>
+      <div class="flex flex-col md:flex-row justify-between gap-4 mb-6">
+        <div class="flex items-center gap-2 flex-1 md:flex-initial">
+          <label for="search" class="text-sm font-medium text-gray-700 whitespace-nowrap">Search:</label>
+          <div class="relative flex-1 md:w-64">
+            <input
+              id="search"
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search plans..."
+              class="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              :disabled="isLoading"
+            />
+            <div v-if="isLoading" class="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
             </div>
-          </td>
-        </tr>
-      </template>
-    </VDataTable>
+          </div>
+        </div>
+        <div v-if="isLoading" class="flex items-center text-sm text-gray-500">
+          <div class="animate-pulse flex items-center gap-2">
+            <div class="h-2 w-2 bg-gray-400 rounded-full animate-bounce"></div>
+            <div class="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+            <div class="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            <span>Loading...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="w-full overflow-x-auto">
+        <VDataTable
+          :data="plans || []"
+          :columns="columns"
+          :page-size="10"
+          :page-size-options="[10, 20, 50]"
+          :show-entries-per-page="true"
+          :show-pagination="true"
+          class="w-full"
+          :loading="isLoading"
+        />
+      </div>
+    </div>
   </div>
 </template>
+
+
+<style scoped>
+.title-bold {
+  font-weight: 900;
+}
+</style>
