@@ -1,12 +1,18 @@
 @import './base.css';
 
+/* ===== Reset layout template Vite ===== */
+html, body, #app { height: 100%; }
+body { margin: 0; }
+
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
   font-weight: normal;
 }
 
+/* Link styles */
 a,
 .green {
   text-decoration: none;
@@ -21,15 +27,26 @@ a,
   }
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+/* ===== Force GLOBAL LIGHT THEME ===== */
+:root {
+  color-scheme: light;              /* form controls tetap light */
+  --bg: #ffffff;
+  --fg: #0f172a;
 }
+
+/* Background + teks utama */
+html, body, #app {
+  background-color: var(--bg) !important;
+  color: var(--fg) !important;
+}
+
+/* Netralisir selector dark dari lib/toggler */
+html.dark, body.dark, #app.dark,
+.dark, .dark body, .dark #app,
+[data-theme='dark'], [data-theme='dark'] body, [data-theme='dark'] #app {
+  background-color: var(--bg) !important;
+  color: var(--fg) !important;
+}
+
+/* Opsional: warna teks sekunder agar kontras di light */
+::selection { background: #bfdbfe; color: #0f172a; }
