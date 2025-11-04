@@ -91,7 +91,7 @@ const confirmPay = async () => {
   isConfirmOpen.value = false;
 };
 
-// ----- Ordered Plans table (TanStack via VDataTable) -----
+
 const orderedPlans = computed<OrderedPlanSummary[]>(() => policy.value?.orderedPlans ?? []);
 
 const columns: ColumnDef<OrderedPlanSummary>[] = [
