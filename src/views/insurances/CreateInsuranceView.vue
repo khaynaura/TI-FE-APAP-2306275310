@@ -37,13 +37,20 @@ const createInsurance = async (bodyRequest: InsurancePlanRequest) => {
     <div class="px-8 py-8">
       <h1 class="text-3xl font-extrabold text-gray-800 mb-2 title-bold">Create Insurance Plan</h1>
       <p class="text-gray-600 mb-8">Add a new insurance plan to the system</p>
+      <hr class="border-gray-200 custom-margin" />
       <VInsuranceForm :insuranceModel="insuranceModel" :action="createInsurance" />
     </div>
+
   </main>
 </template>
 
 <style scoped>
 .title-bold {
-  font-weight: 900;
+  font-weight: 800;
+}
+
+.custom-margin {
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 </style>

@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { format } from 'date-fns'
+// ...existing code...
+// import { format } from 'date-fns'
 import VButton from '@/components/common/VButton.vue'
+import VFieldDisplay from '@/components/common/VFieldDisplay.vue'
 import type { InsurancePlan } from '@/interfaces/insurances.interface'
 import { useInsurancePlanStore } from '@/stores/insurances/insurances.stores.ts'
 
@@ -13,26 +15,36 @@ const { id: planId } = route.params as { id: string }
 
 const plan = ref(undefined as undefined | InsurancePlan)
 
+const showDeleteModal = ref(false)
+const isDeleting = ref(false)
+
 const getPlan = async () => {
   const getPlanResponse = await insurancePlanStore.getPlanById(planId as string)
   plan.value = getPlanResponse ?? undefined
 }
 
 const deletePlan = async () => {
-  if (confirm('Apakah Anda yakin ingin menghapus Insurance Plan ini?')) {
-    const success = await insurancePlanStore.deletePlan(planId as string)
-    if (success) {
-      router.replace('/insurance-plan')
-    }
+  isDeleting.value = true
+  const success = await insurancePlanStore.deletePlan(planId as string)
+  isDeleting.value = false
+  if (success) {
+    showDeleteModal.value = false
+    router.replace('/insurance-plan')
   }
 }
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR'
-  }).format(amount)
+
+// label untuk services (agar tampil sebagai chip)
+const serviceLabels: Record<string, string> = {
+  ACCOMMODATION: 'Accommodation',
+  FLIGHT: 'Flight',
+  TOUR_PACKAGE: 'Tour Package',
+  RENTALS: 'Rentals'
 }
+
+const selectedServices = computed(() => {
+  return (plan.value?.applicableService ?? []).map((s) => serviceLabels[s] ?? s)
+})
 
 onMounted(async () => {
   await getPlan()
@@ -43,197 +55,180 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="w-full min-h-screen bg-gray-50">
-    <!-- Header Navigation -->
-    <div class="bg-white border-b">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-4">
-          <div class="flex items-center space-x-8">
-            <h1 class="text-2xl font-bold text-orange-500">Insurance</h1>
-            <nav class="flex space-x-8">
-              <RouterLink to="/insurance-plan" class="text-orange-500 font-medium border-b-2 border-orange-500 pb-1">
-                Insurance Plan
-              </RouterLink>
-              <RouterLink to="/policy" class="text-gray-500 hover:text-gray-700">
-                Policy
-              </RouterLink>
-              <RouterLink to="/claim" class="text-gray-500 hover:text-gray-700">
-                Claim
-              </RouterLink>
-              <RouterLink to="/statistics" class="text-gray-500 hover:text-gray-700">
-                Statistics
-              </RouterLink>
-            </nav>
+  <main class="w-full min-h-screen">
+    <div class="px-8 py-8">
+      <!-- Header -->
+      <div class="flex items-start justify-between gap-4">
+                <div>
+                  <h1 class="text-3xl font-extrabold text-gray-900 title-bold">Insurance Plan Details</h1>
+                  <p class="text-gray-600 mt-1">{{ plan?.planName }}</p>
+                </div>
+
+                <div class="flex gap-3 shrink-0">
+                  <VButton variant="primary" size="lg" @click="router.push(`/insurance-plan/update/${planId}`)">
+                    Update Plan
+                  </VButton>
+                  <VButton variant="danger" size="lg" @click="showDeleteModal = true">Delete Plan</VButton>
+                </div>
+              </div>
+
+      <hr class="border-gray-200 custom-margin" />
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-12">
+        <section>
+          <h3 class="text-l font-black text-gray-900 section-bold">Basic Information</h3>
+          <hr class="border-gray-200 custom-margin2" />
+          <div class="grid grid-cols-1 gap-4">
+            <VFieldDisplay label="ID" :value="plan?.id" />
+            <VFieldDisplay label="Plan Name" :value="plan?.planName" />
+            <VFieldDisplay label="Provider ID" :value="plan?.providerId" />
+            <VFieldDisplay
+              label="Plan Duration"
+              :value="plan?.expiredByDays ? `${plan?.expiredByDays} days` : null"
+            />
           </div>
-        </div>
+        </section>
+
+        <section>
+          <h3 class="text-l font-black text-gray-900 section-bold ">Financial Information</h3>
+          <hr class="border-gray-200 custom-margin2" />
+          <div class="grid grid-cols-1 gap-4">
+            <VFieldDisplay
+              label="Price (IDR)"
+              :value="plan?.price"
+              format="currency"
+              variant="success"
+              currency="IDR"
+            />
+            <VFieldDisplay
+              label="Coverage Amount (IDR)"
+              :value="plan?.coverage"
+              format="currency"
+              variant="info"
+              currency="IDR"
+            />
+            <VFieldDisplay
+              label="Created Date"
+              :value="plan ? plan.createdAt : null"
+              format="date"
+            />
+            <VFieldDisplay
+              label="Last Updated"
+              :value="plan ? plan.updatedAt : null"
+              format="date"
+            />
+          </div>
+        </section>
+      </div>
+
+      <hr class="border-gray-200 custom-margin2" />
+
+      <div class="flex flex-col gap-2.5 mt-12">
+        <section>
+          <h3 class="text-l font-black text-gray-900 section-bold">Coverage Details</h3>
+          <hr class="border-gray-200 custom-margin2" />
+          <VFieldDisplay
+            label="Coverage Details"
+            :value="plan?.coverageDetails || null"
+            placeholder="No coverage details available"
+            multiline
+          />
+        </section>
+
+        <hr class="border-gray-200 custom-margin2" />
+        <!-- Applicable Services -->
+        <section>
+          <h3 class="text-l font-black text-gray-900 section-bold">Applicable Services</h3>
+          <hr class="border-gray-200 custom-margin2" />
+          <div class="flex flex-wrap gap-3">
+            <span
+              v-for="s in selectedServices"
+              :key="s"
+              class="inline-flex items-center px-4 py-1.5 rounded-full bg-blue-100 text-blue-800 text-base font-semibold ring-1 ring-blue-300"
+            >
+              {{ s }}
+            </span>
+            <span v-if="!selectedServices.length" class="text-sm text-gray-500">No services</span>
+          </div>
+        </section>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-3 pt-8">
+        <VButton @click="router.push('/insurance-plan')" variant="secondary" size="lg">
+          Kembali
+        </VButton>
       </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="bg-white rounded-lg shadow-sm border">
-        <!-- Header Section -->
-        <div class="px-6 py-4 border-b border-gray-200">
-          <div class="flex justify-between items-center">
-            <div>
-              <h2 class="text-xl font-semibold text-gray-900">Insurance Plan Details</h2>
-              <p class="text-sm text-gray-500 mt-1">{{ plan?.planName }}</p>
-            </div>
-            <div class="flex gap-3">
-              <RouterLink :to="`/insurance-plan/update/${planId}`">
-                <VButton class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
-                  Update Plan
-                </VButton>
-              </RouterLink>
-              <VButton @click="deletePlan" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md">
-                Delete Plan
-              </VButton>
-            </div>
-          </div>
+    <teleport to="body">
+  <div v-if="showDeleteModal" class="fixed inset-0 z-[1000] flex items-center justify-center">
+    <!-- Backdrop abu-abu tanpa blur -->
+    <div
+      class="absolute inset-0 bg-black/50"
+      @click="!isDeleting && (showDeleteModal = false)"
+    ></div>
+
+    <div class="relative z-10 w-[400px] rounded-xl bg-white p-8 shadow-xl">
+      <!-- Icon container - centered -->
+      <div class="flex justify-center mb-5">
+        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
         </div>
+      </div>
 
-        <!-- Content Form-like Layout -->
-        <div class="p-6">
-          <div class="flex flex-col gap-6">
-            <!-- Basic Information Section -->
-            <div>
-              <h3 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
-              <div class="grid grid-cols-2 gap-4">
-                <!-- Custom Read-only Input Style -->
-                <div class="flex flex-col">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">ID</label>
-                  <div class="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 text-sm">
-                    {{ plan?.id || '-' }}
-                  </div>
-                </div>
+      <!-- Title -->
+      <h2 class="text-center text-lg text-gray-900 section-bold">Delete Insurance Plan</h2>
+      <hr class="border-gray-100 custom-margin2" />
+      <!-- Description -->
+      <p class="text-center text-sm text-gray-600 mb-8">
+        Are you sure you want to delete
+        <span class="title-bold">"{{ plan?.planName }}"</span>? This action cannot be undone.
+      </p>
 
-                <div class="flex flex-col">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Plan Name</label>
-                  <div class="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 text-sm">
-                    {{ plan?.planName || '-' }}
-                  </div>
-                </div>
-
-                <div class="flex flex-col">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Provider ID</label>
-                  <div class="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 text-sm">
-                    {{ plan?.providerId || '-' }}
-                  </div>
-                </div>
-
-                <div class="flex flex-col">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Plan Duration</label>
-                  <div class="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 text-sm">
-                    {{ plan?.expiredByDays ? `${plan.expiredByDays} days` : '-' }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Financial Information Section -->
-            <div>
-              <h3 class="text-lg font-medium text-gray-900 mb-4">Financial Information</h3>
-              <div class="grid grid-cols-2 gap-4">
-                <div class="flex flex-col">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Price (IDR)</label>
-                  <div class="px-3 py-2 border border-gray-300 rounded-md bg-green-50 text-green-800 text-sm font-medium">
-                    {{ plan ? formatCurrency(plan.price) : '-' }}
-                  </div>
-                </div>
-
-                <div class="flex flex-col">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Coverage Amount (IDR)</label>
-                  <div class="px-3 py-2 border border-gray-300 rounded-md bg-blue-50 text-blue-800 text-sm font-medium">
-                    {{ plan ? formatCurrency(plan.coverage) : '-' }}
-                  </div>
-                </div>
-
-                <div class="flex flex-col">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Created Date</label>
-                  <div class="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 text-sm">
-                    {{ plan ? format(new Date(plan.createdAt), 'dd MMMM yyyy \'pukul\' HH:mm') : '-' }}
-                  </div>
-                </div>
-
-                <div class="flex flex-col">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Last Updated</label>
-                  <div class="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 text-sm">
-                    {{ plan ? format(new Date(plan.updatedAt), 'dd MMMM yyyy \'pukul\' HH:mm') : '-' }}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Coverage Details Section -->
-            <div>
-              <h3 class="text-lg font-medium text-gray-900 mb-4">Coverage Details</h3>
-              <div class="flex flex-col">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Coverage Details</label>
-                <div class="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 text-sm min-h-[100px] whitespace-pre-wrap">
-                  {{ plan?.coverageDetails || 'No coverage details available' }}
-                </div>
-              </div>
-            </div>
-
-            <!-- Applicable Services Section -->
-            <div>
-              <h3 class="text-lg font-medium text-gray-900 mb-4">Applicable Services</h3>
-              <div class="grid grid-cols-4 gap-4">
-                <div class="flex items-center gap-2 pointer-events-none">
-                  <input
-                    type="checkbox"
-                    :checked="plan?.applicableService?.includes('ACCOMMODATION')"
-                    disabled
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-75"
-                  />
-                  <span class="text-sm text-gray-600">Accommodation</span>
-                </div>
-                <div class="flex items-center gap-2 pointer-events-none">
-                  <input
-                    type="checkbox"
-                    :checked="plan?.applicableService?.includes('FLIGHT')"
-                    disabled
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-75"
-                  />
-                  <span class="text-sm text-gray-600">Flight</span>
-                </div>
-                <div class="flex items-center gap-2 pointer-events-none">
-                  <input
-                    type="checkbox"
-                    :checked="plan?.applicableService?.includes('TOUR_PACKAGE')"
-                    disabled
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-75"
-                  />
-                  <span class="text-sm text-gray-600">Tour Package</span>
-                </div>
-                <div class="flex items-center gap-2 pointer-events-none">
-                  <input
-                    type="checkbox"
-                    :checked="plan?.applicableService?.includes('RENTALS')"
-                    disabled
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-75"
-                  />
-                  <span class="text-sm text-gray-600">Rentals</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
-              <VButton
-                @click="router.back()"
-                variant="secondary"
-                class="px-6 py-2"
-              >
-                Kembali
-              </VButton>
-            </div>
-          </div>
-        </div>
+      <hr class="border-gray-100 custom-margin2" />
+      <!-- Buttons -->
+      <div class="flex justify-center gap-3">
+        <VButton variant="secondary" size="md" :disabled="isDeleting" @click="showDeleteModal = false">
+          Cancel
+        </VButton>
+        <VButton variant="danger" size="md" :loading="isDeleting" :disabled="isDeleting" @click="deletePlan">
+          Delete
+        </VButton>
       </div>
     </div>
   </div>
+</teleport>
+
+
+  </main>
 </template>
 
 <style scoped>
+.title-bold {
+  font-weight: 800;
+}
+
+.section-bold {
+  font-weight: 700;
+}
+
+.field-bold {
+  font-weight: 450;
+}
+
+.title-bold {
+  font-weight: 550;
+}
+
+.custom-margin {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.custom-margin2 {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
 </style>

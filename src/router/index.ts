@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import InsuranceView from '@/views/insurances/InsurancePlanList.vue'
+import InsuranceView from '@/views/insurances/InsurancePlanView.vue'
 import CreateInsuranceView from '@/views/insurances/CreateInsuranceView.vue'
 import ReadInsuranceDetailView from '@/views/insurances/ReadInsuranceDetail.vue'
+import EditInsuranceView from '@/views/insurances/EditInsuranceView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +27,11 @@ const router = createRouter({
       path: '/insurance-plan/:id',
       name: 'insurance-plan-detail',
       component: ReadInsuranceDetailView
+    },
+    {
+      path: '/insurance-plan/update/:id',
+      name: 'insurance-plan-edit',
+      component: EditInsuranceView
     },
     // // Rute lain untuk Policy, Claim, dll. akan ditambahkan di sini
     // {

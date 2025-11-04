@@ -1,4 +1,5 @@
 <script setup lang="ts" generic="T">
+import { computed } from 'vue'
 import {
   useVueTable,
   getCoreRowModel,
@@ -14,6 +15,10 @@ interface Props<T> {
   pageSizeOptions?: number[]
   showEntriesPerPage?: boolean
   showPagination?: boolean
+  headerVariant?: 'gray' | 'blue' | 'indigo' | 'emerald' | 'rose' | 'slate'
+  striped?: boolean
+  stickyHeader?: boolean
+  loading?: boolean
 }
 
 const props = withDefaults(defineProps<Props<T>>(), {
@@ -21,53 +26,66 @@ const props = withDefaults(defineProps<Props<T>>(), {
   pageSizeOptions: () => [5, 10, 20, 50],
   showEntriesPerPage: true,
   showPagination: true,
+  headerVariant: 'gray',
+  striped: true,
+  stickyHeader: true,
+  loading: false,
 })
 
 const table = useVueTable<T>({
-  get data() {
-    return props.data
-  },
-  get columns() {
-    return props.columns
-  },
+  get data() { return props.data },
+  get columns() { return props.columns },
   getCoreRowModel: getCoreRowModel(),
   getPaginationRowModel: getPaginationRowModel(),
-  initialState: {
-    pagination: {
-      pageSize: props.pageSize,
-    },
-  },
+  initialState: { pagination: { pageSize: props.pageSize } },
+})
+
+const headerClasses = computed(() => {
+  const map = {
+    gray: 'bg-gray-50 text-gray-800',
+    blue: 'bg-blue-50 text-blue-800',
+    indigo: 'bg-indigo-50 text-indigo-800',
+    emerald: 'bg-emerald-50 text-emerald-800',
+    rose: 'bg-rose-50 text-rose-800',
+    slate: 'bg-slate-50 text-slate-800',
+  } as const
+  return map[props.headerVariant]
 })
 </script>
 
 <template>
-  <div class="bg-white rounded-lg shadow overflow-hidden">
-    <div class="overflow-x-auto">
-      <!-- Entries per page -->
-      <div v-if="showEntriesPerPage" class="flex items-center gap-2 p-4 whitespace-nowrap">
-        <select
-          :value="table.getState().pagination.pageSize"
-          @change="table.setPageSize(Number(($event.target as HTMLSelectElement).value))"
-          class="border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
-        >
-          <option v-for="size in pageSizeOptions" :key="size" :value="size">
-            {{ size }}
-          </option>
-        </select>
-        <span class="text-sm text-gray-600">entries per page</span>
+  <div class="bg-white rounded-lg shadow overflow-hidden title-bold">
+    <div class="overflow-x-auto relative">
+      <!-- Toolbar: kiri = slot, kanan = entries per page (default) -->
+      <div class="p-4">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div class="flex items-center gap-2">
+            <slot name="toolbar-left" />
+          </div>
+          <div class="flex items-center gap-2">
+            <slot name="toolbar-right">
+              <div v-if="showEntriesPerPage" class="flex items-center gap-2 whitespace-nowrap">
+                <select
+                  :value="table.getState().pagination.pageSize"
+                  @change="table.setPageSize(Number(($event.target as HTMLSelectElement).value))"
+                  class="border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                >
+                  <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                </select>
+                <span class="text-sm text-gray-600">entries per page</span>
+              </div>
+            </slot>
+          </div>
+        </div>
       </div>
 
       <table class="w-full">
-        <thead>
-          <tr
-            v-for="headerGroup in table.getHeaderGroups()"
-            :key="headerGroup.id"
-            class="border-b border-gray-200"
-          >
+        <thead :class="[stickyHeader ? 'sticky top-0 z-10' : '']">
+          <tr v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id" class="border-b border-gray-200">
             <th
               v-for="header in headerGroup.headers"
               :key="header.id"
-              class="px-6 py-4 text-left text-sm font-medium text-gray-700"
+              :class="['px-6 py-3 text-left text-sm title-bold', headerClasses]"
             >
               <FlexRender
                 v-if="!header.isPlaceholder"
@@ -79,22 +97,24 @@ const table = useVueTable<T>({
         </thead>
         <tbody>
           <tr
-            v-for="row in table.getRowModel().rows"
+            v-for="(row, rowIndex) in table.getRowModel().rows"
             :key="row.id"
-            class="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+            :class="[
+              'border-b border-gray-200 transition-colors',
+              striped ? (rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50') : '',
+              'hover:bg-gray-100'
+            ]"
           >
             <td
               v-for="cell in row.getVisibleCells()"
               :key="cell.id"
-              :class="cell.column.id === 'actions' ? 'px-4 py-4' : 'px-6 py-4 text-sm text-gray-600'"
+              :class="cell.column.id === 'actions' ? 'px-4 py-4' : 'px-6 py-4 text-sm text-gray-700'"
             >
               <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
             </td>
           </tr>
           <tr v-if="table.getRowModel().rows.length === 0">
-            <td :colspan="columns.length" class="px-6 py-8 text-center text-sm text-gray-500">
-              No data available
-            </td>
+            <td :colspan="columns.length" class="px-6 py-8 text-center text-sm text-gray-500">No data available</td>
           </tr>
         </tbody>
       </table>
@@ -161,3 +181,9 @@ const table = useVueTable<T>({
     </div>
   </div>
 </template>
+
+<style scoped>
+.title-bold {
+  font-weight: 600;
+}
+</style>
