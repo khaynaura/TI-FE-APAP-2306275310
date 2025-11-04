@@ -17,6 +17,7 @@ const policyStore = usePolicyStore();
 const policy = ref<Policy | null>(null);
 const isLoading = ref(false);
 const isPaying = ref(false);
+const isConfirmOpen = ref(false);
 
 const serviceLabels: Record<string, string> = {
   ACCOMMODATION: 'Accommodation',
@@ -56,6 +57,11 @@ const formatLocalDate = (value?: string | null) => {
   return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: '2-digit' });
 };
 
+const formatCurrency = (val?: number | null, currency = 'IDR') => {
+  if (val == null) return null;
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency }).format(val);
+};
+
 const fetchPolicy = async () => {
   isLoading.value = true;
   try {
@@ -76,6 +82,13 @@ const payPolicy = async () => {
   } finally {
     isPaying.value = false;
   }
+};
+
+const openPayConfirm = () => { isConfirmOpen.value = true; };
+const closePayConfirm = () => { if (!isPaying.value) isConfirmOpen.value = false; };
+const confirmPay = async () => {
+  await payPolicy();
+  isConfirmOpen.value = false;
 };
 
 // ----- Ordered Plans table (TanStack via VDataTable) -----
@@ -152,7 +165,7 @@ onMounted(fetchPolicy);
             :disabled="isPaying || isLoading"
             variant="outline-green"
             size="lg"
-            @click="payPolicy"
+            @click="openPayConfirm"
           >
             Pay
           </VButton>
@@ -242,6 +255,48 @@ onMounted(fetchPolicy);
         </VButton>
       </div>
     </div>
+
+    <!-- Confirm Payment Modal -->
+    <div v-if="isConfirmOpen" class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/60" @click="closePayConfirm"></div>
+      <div
+        class="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-title"
+      >
+        <div class="flex items-center justify-between mb-6">
+          <h3 id="confirm-title" class="text-lg font-bold text-gray-900 flex-1 text-center section-bold">Confirm Payment</h3>
+          <button class="text-gray-400 hover:text-gray-600 p-1 ml-4" @click="closePayConfirm" :disabled="isPaying" aria-label="Close">✕</button>
+        </div>
+
+        <p class="text-sm text-gray-600 mb-6 text-center">
+          Are you sure you want to process the payment for this policy?
+        </p>
+
+        <hr class="border-gray-100 custom-margin2" />
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-5 mb-6">
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-slate-500 soft-bold">Policy ID:</span>
+              <span class="font-semibold text-slate-900 field-bold">{{ policy?.id }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-slate-500 soft-bold">Total Amount:</span>
+              <span class="font-bold text-emerald-600 section-bold">
+                {{ formatCurrency(policy?.totalPrice ?? 0, 'IDR') }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <hr class="border-gray-100 custom-margin2" />
+        <div class="flex justify-center gap-3">
+          <VButton variant="secondary" size="md" @click="closePayConfirm" :disabled="isPaying">Cancel</VButton>
+          <VButton variant="outline-green" size="md" :loading="isPaying" @click="confirmPay">Continue Payment</VButton>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -249,6 +304,7 @@ onMounted(fetchPolicy);
 .title-bold { font-weight: 800; }
 .section-bold { font-weight: 700; }
 .field-bold { font-weight: 550; }
+.soft-bold { font-weight: 450; }
 
 .custom-margin { margin-top: 20px; margin-bottom: 20px; }
 .custom-margin2 { margin-top: 10px; margin-bottom: 10px; }
