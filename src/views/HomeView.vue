@@ -2,7 +2,6 @@
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useStatisticsStore } from '@/stores/statistics/statistics.stores.ts'
-// 1. Import komponen VStatCard yang baru kita buat
 import VStatCard from '@/components/common/VStatCard.vue'
 
 // (Logika script sisanya tetap sama)

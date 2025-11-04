@@ -38,7 +38,11 @@ const formatService = (s?: string) =>
 const formatStatus = (s?: string | null) => formatService(s ?? '');
 
 const planAmount = computed(() => policy.value?.orderedPlans?.length ?? 0);
-const canPay = computed(() => (policy.value?.status ?? '').toUpperCase() !== 'PAID');
+
+// Payment availability and header labels
+const rawStatus = computed(() => (policy.value?.status ?? '').toUpperCase());
+const canPay = computed(() => rawStatus.value === 'CREATED');
+const isExpired = computed(() => rawStatus.value === 'EXPIRED');
 
 const formatDateTime = (value?: string | null) => {
   if (!value) return null;
@@ -94,7 +98,7 @@ const confirmPay = async () => {
   isConfirmOpen.value = false;
 };
 
-// Variant mapping for Policy.status
+// Variant mapping for Policy.status (for info box)
 const policyStatusVariant = (s?: string | null) => {
   const v = (s ?? '').toUpperCase();
   if (v === 'PAID') return 'success';                         // green
@@ -207,6 +211,14 @@ onMounted(fetchPolicy);
           >
             Pay
           </VButton>
+
+          <span
+            v-else-if="isExpired"
+            class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-slate-400 text-white text-sm section-bold pointer-events-none select-none"
+          >
+            Expired
+          </span>
+
           <span
             v-else
             class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-slate-400 text-white text-sm section-bold pointer-events-none select-none"

@@ -2,11 +2,8 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 import { toast } from 'vue-sonner'
 import type { CommonResponseInterface } from '@/interfaces/common.response.interface'
-// Pastikan nama file interface benar: "insurance.interface.ts" atau "insurances.interface.ts"
-import type { HomeSummary } from '@/interfaces/insurances.interface.ts'
+import type { HomeSummary } from '@/interfaces/statistics.interafce'
 
-// Backend mapping: @RequestMapping("/api/statistics")
-// Pastikan VITE_API_URL sudah mencakup "/api"
 const baseStatisticsUrl = `${import.meta.env.VITE_API_URL}/statistics`
 
 export const useStatisticsStore = defineStore('statistics', {
