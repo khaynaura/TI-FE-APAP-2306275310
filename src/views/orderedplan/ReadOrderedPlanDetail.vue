@@ -189,7 +189,7 @@ const closeModal = () => {
 // Navigate to submit claim page
 const goToSubmitClaim = () => {
   if (!plan.value) return;
-  router.push(`/claim/submit/${plan.value.id}`);
+  router.push({ name: 'claim-add', params: { id: plan.value.id } });
 };
 
 onMounted(fetchOrderedPlan);
@@ -204,12 +204,20 @@ onMounted(fetchOrderedPlan);
           <h1 class="text-3xl font-extrabold text-gray-900 title-bold">Ordered Plan Details</h1>
           <p class="text-gray-600 mt-1">Plan ID: {{ plan?.id }}</p>
         </div>
-
         <div class="flex items-center gap-3 shrink-0">
-          <VButton variant="outline-orange" size="lg" :disabled="isLoading || !plan" @click="goToSubmitClaim">
-            Claim
-          </VButton>
-        </div>
+
+
+      <div class="flex items-center gap-3 shrink-0">
+  <VButton
+    variant="orange"
+    size="lg"
+    :disabled="isLoading || !plan"
+    @click="goToSubmitClaim"
+  >
+    Claim
+  </VButton>
+</div>
+</div>
       </div>
 
       <hr class="border-gray-200 custom-margin" />

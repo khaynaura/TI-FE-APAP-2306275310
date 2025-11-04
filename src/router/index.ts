@@ -8,6 +8,7 @@ import PolicyView from '@/views/policy/PolicyView.vue'
 import CreatePolicyView from '@/views/policy/CreatePolicyView.vue'
 import ReadPolicyDetailView from '@/views/policy/ReadPolicyDetailView.vue'
 import ReadOrderedPlanDetail from '@/views/orderedplan/ReadOrderedPlanDetail.vue'
+import CreateClaimView from '@/views/orderedplan/CreateClaimView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -56,6 +57,11 @@ const router = createRouter({
       path: '/ordered-plan/:id',
       name: 'ordered-plan-detail',
       component: ReadOrderedPlanDetail
+    },
+    {
+      path: '/claim/add/:id',
+      name: 'claim-add',
+      component: CreateClaimView
     },
     // // Rute lain untuk Policy, Claim, dll. akan ditambahkan di sini
     // {
