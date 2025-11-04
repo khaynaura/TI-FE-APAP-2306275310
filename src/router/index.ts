@@ -11,6 +11,7 @@ import ReadOrderedPlanDetail from '@/views/orderedplan/ReadOrderedPlanDetail.vue
 import CreateClaimView from '@/views/orderedplan/CreateClaimView.vue'
 import ReadAllClaimView from '@/views/claim/ReadAllClaimView.vue'
 import ProcessClaimView from '@/views/claim/ProcessClaimView.vue'
+import StatisticsView from '@/views/statistics/StatisticsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -74,6 +75,11 @@ const router = createRouter({
       path: '/claim/process/:id',
       name: 'claim-process',
       component: ProcessClaimView
+    },
+    {
+      path: '/statistics',
+      name: 'statistics',
+      component: StatisticsView
     },
     // // Rute lain untuk Policy, Claim, dll. akan ditambahkan di sini
     // {

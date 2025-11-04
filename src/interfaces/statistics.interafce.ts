@@ -3,3 +3,8 @@ export interface HomeSummary {
   totalPolicies: number;
   totalClaimsProcessed: number;
 }
+
+export interface ChartData {
+  labels: string[];
+  data: number[];
+}
