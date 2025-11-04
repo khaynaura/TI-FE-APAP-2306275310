@@ -34,6 +34,9 @@ const formatService = (s?: string) =>
     .map(w => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
 
+// Title-case for status text
+const formatStatus = (s?: string | null) => formatService(s ?? '');
+
 const planAmount = computed(() => policy.value?.orderedPlans?.length ?? 0);
 const canPay = computed(() => (policy.value?.status ?? '').toUpperCase() !== 'PAID');
 
@@ -91,6 +94,39 @@ const confirmPay = async () => {
   isConfirmOpen.value = false;
 };
 
+// Variant mapping for Policy.status
+const policyStatusVariant = (s?: string | null) => {
+  const v = (s ?? '').toUpperCase();
+  if (v === 'PAID') return 'success';                         // green
+  if (v === 'CREATED') return 'warning';                      // yellow
+  if (v === 'PARTIALLY_CLAIMED' || v === 'FULLY_CLAIMED') return 'purple'; // purple
+  if (v === 'EXPIRED') return 'secondary';                    // gray
+  return 'secondary';
+};
+
+// Variant mapping for OrderedPlan.status
+const orderedPlanStatusVariant = (s?: string | null) => {
+  const v = (s ?? '').toUpperCase();
+  if (v === 'PAID' || v === 'ACCEPTED' || v === 'ACTIVE') return 'success'; // green
+  if (v === 'WAITING_FOR_REVIEW') return 'info';                             // blue
+  if (v === 'CLAIMED') return 'purple';                                      // purple
+  if (v === 'ORDERED') return 'warning';                                     // yellow
+  if (v === 'REJECTED') return 'danger';                                     // red
+  if (v === 'EXPIRED') return 'secondary';                                   // gray
+  return 'secondary';
+};
+
+// Badge classes for DataTable
+const orderedPlanBadgeClass = (s?: string | null) => {
+  switch (orderedPlanStatusVariant(s)) {
+    case 'success': return 'bg-green-100 text-green-700';
+    case 'info': return 'bg-blue-100 text-blue-700';
+    case 'purple': return 'bg-purple-100 text-purple-700';
+    case 'warning': return 'bg-amber-100 text-amber-700';
+    case 'danger': return 'bg-red-100 text-red-700';
+    default: return 'bg-slate-100 text-slate-700';
+  }
+};
 
 const orderedPlans = computed<OrderedPlanSummary[]>(() => policy.value?.orderedPlans ?? []);
 
@@ -110,13 +146,15 @@ const columns: ColumnDef<OrderedPlanSummary>[] = [
   {
     accessorKey: 'status',
     header: 'STATUS',
-    cell: info =>
-      h(
+    cell: info => {
+      const raw = String(info.getValue() ?? '');
+      return h(
         'span',
-        { class: 'inline-flex items-center px-2 py-0.5 rounded-full text-xs title-bold bg-slate-100 text-slate-700' },
-        String(info.getValue() ?? '-')
-      ),
-    size: 120,
+        { class: ['inline-flex items-center px-2 py-0.5 rounded-full text-xs title-bold', orderedPlanBadgeClass(raw)] },
+        formatStatus(raw) || '-'
+      );
+    },
+    size: 150,
   },
   {
     accessorKey: 'expiredDate',
@@ -190,7 +228,7 @@ onMounted(fetchPolicy);
             <VFieldDisplay label="Policy ID" :value="policy?.id" />
             <VFieldDisplay label="Booking ID" :value="policy?.bookingId" />
             <VFieldDisplay label="User ID" :value="policy?.userId" />
-            <!-- Service dibirukan (seperti Total Coverage) -->
+            <!-- Service dibirukan -->
             <VFieldDisplay
               label="Service"
               :value="policy?.service ? (serviceLabels[String(policy?.service)] ?? formatService(String(policy?.service))) : null"
@@ -208,7 +246,7 @@ onMounted(fetchPolicy);
             <VFieldDisplay
               label="Status"
               :value="policy?.status || null"
-              :variant="(policy?.status ?? '').toUpperCase() === 'PAID' ? 'success' : 'warning'"
+              :variant="policyStatusVariant(policy?.status)"
             />
             <VFieldDisplay label="Total Price" :value="policy?.totalPrice" format="currency" variant="success" currency="IDR" />
             <VFieldDisplay label="Total Coverage" :value="policy?.totalCoverage" format="currency" variant="info" currency="IDR" />
@@ -217,7 +255,7 @@ onMounted(fetchPolicy);
         </section>
       </div>
 
-      <!-- Dates in one row, smaller text -->
+      <!-- Dates -->
       <hr class="border-gray-200 custom-margin2" />
       <section>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">

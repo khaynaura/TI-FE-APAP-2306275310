@@ -1,3 +1,4 @@
+<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, onUnmounted, h } from 'vue';
 import { useRouter } from 'vue-router';
@@ -32,18 +33,31 @@ const formatServiceName = (service: string) =>
     .map(w => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ') || '-';
 
-const statusBadge = (status?: string) => {
-  const s = (status ?? '').toUpperCase();
-  const base = 'px-2 py-0.5 text-xs rounded-full title-bold';
-  if (s === 'PAID') return `${base} bg-emerald-100 text-emerald-700`;
-  if (s === 'UNPAID') return `${base} bg-rose-100 text-rose-700`;
-  return `${base} bg-slate-100 text-slate-700`;
+// Title-case for status text
+const formatStatus = (s?: string | null) => formatServiceName(String(s ?? ''));
+
+// Status variant mapping (same as Policy Detail)
+const policyStatusVariant = (s?: string | null) => {
+  const v = (s ?? '').toUpperCase();
+  if (v === 'PAID') return 'success';                         // green
+  if (v === 'CREATED') return 'warning';                      // yellow
+  if (v === 'PARTIALLY_CLAIMED' || v === 'FULLY_CLAIMED') return 'purple'; // purple
+  if (v === 'EXPIRED') return 'secondary';                    // gray
+  return 'secondary';
+};
+
+const policyStatusBadgeClass = (s?: string | null) => {
+  switch (policyStatusVariant(s)) {
+    case 'success': return 'bg-green-100 text-green-700';
+    case 'warning': return 'bg-amber-100 text-amber-700';
+    case 'purple':  return 'bg-purple-100 text-purple-700';
+    default:        return 'bg-slate-100 text-slate-700';
+  }
 };
 
 // --- Navigation ---
 const goToCreatePolicy = () => router.push('/policy/create');
 const goToViewPolicy = (id: string) => router.push(`/policy/${id}`);
-
 
 // --- FE-only search (filter di computed) ---
 const filteredPolicies = computed<Policy[]>(() => {
@@ -107,10 +121,14 @@ const columns: ColumnDef<Policy>[] = [
     accessorKey: 'status',
     header: 'STATUS',
     cell: info => {
-      const s = String(info.getValue() ?? '');
-      return h('span', { class: statusBadge(s) }, s || '-');
+      const raw = String(info.getValue() ?? '');
+      return h(
+        'span',
+        { class: ['inline-flex items-center px-2 py-0.5 rounded-full text-xs title-bold', policyStatusBadgeClass(raw)] },
+        formatStatus(raw) || '-'
+      );
     },
-    size: 120,
+    size: 140,
   },
   {
     id: 'actions',
@@ -134,9 +152,9 @@ const fetchData = async () => {
   isLoading.value = true;
   try {
     await policyStore.fetchPolicies();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // toast/error handled in store
   } catch (err) {
-    // toast/error sudah ditangani di store
+    // no-op
   } finally {
     isLoading.value = false;
   }
@@ -151,7 +169,7 @@ let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 watch(searchQuery, () => {
   if (searchTimeout) clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    // FE filter only; tidak memanggil API lagi
+    // FE filter only; no API call
   }, 250);
 });
 onUnmounted(() => {

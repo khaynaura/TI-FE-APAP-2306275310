@@ -1,7 +1,7 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
 interface Props {
-  variant?: 'primary' | 'outline-green' | 'outline-blue' | 'secondary' | 'danger'
+  variant?: 'primary' | 'outline-green' | 'outline-blue' | 'outline-orange' | 'secondary' | 'danger'
   size?: 'sm' | 'md' | 'lg'
 }
 

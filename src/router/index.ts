@@ -7,6 +7,7 @@ import EditInsuranceView from '@/views/insurances/EditInsuranceView.vue'
 import PolicyView from '@/views/policy/PolicyView.vue'
 import CreatePolicyView from '@/views/policy/CreatePolicyView.vue'
 import ReadPolicyDetailView from '@/views/policy/ReadPolicyDetailView.vue'
+import ReadOrderedPlanDetail from '@/views/orderedplan/ReadOrderedPlanDetail.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,6 +51,11 @@ const router = createRouter({
       path: '/policy/:id',
       name: 'policy-detail',
       component: ReadPolicyDetailView
+    },
+    {
+      path: '/ordered-plan/:id',
+      name: 'ordered-plan-detail',
+      component: ReadOrderedPlanDetail
     },
     // // Rute lain untuk Policy, Claim, dll. akan ditambahkan di sini
     // {

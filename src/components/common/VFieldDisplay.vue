@@ -15,7 +15,7 @@
 import { computed } from 'vue'
 import { format as formatDate } from 'date-fns'
 
-type Variant = 'neutral' | 'success' | 'info' | 'warning'
+type Variant = 'neutral' | 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'purple'
 
 const props = withDefaults(defineProps<{
   label: string
@@ -69,6 +69,12 @@ const variantClasses = computed(() => {
       return 'border border-blue-200 bg-blue-50 text-blue-800 section-bold'
     case 'warning':
       return 'border border-amber-200 bg-amber-50 text-amber-700 section-bold'
+    case 'danger':
+      return 'border border-red-200 bg-red-50 text-red-800 section-bold'
+    case 'purple':
+      return 'border border-purple-200 bg-purple-50 text-purple-800 section-bold'
+    case 'secondary':
+    case 'neutral':
     default:
       return 'border border-gray-300 bg-gray-50 text-gray-900 field-bold'
   }
