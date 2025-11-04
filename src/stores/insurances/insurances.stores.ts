@@ -128,5 +128,37 @@ export const useInsurancePlanStore = defineStore('insurancePlan', {
         this.loading = false;
       }
     },
+
+    async fetchPlansByService(service: string): Promise<InsurancePlan[]> {
+      this.loading = true;
+      this.error = null;
+      try {
+        const res = await axios.get<CommonResponseInterface<InsurancePlan[]>>(
+          `${baseInsurancePlanUrl}/by-service`,
+          { params: { service } }
+        );
+        this.plans = res.data.data ?? [];
+        if (this.plans.length === 0) {
+          toast.warning(`Tidak ada plan untuk layanan ${service}`);
+        } else {
+          toast.success(`Plan untuk layanan ${service} dimuat`);
+        }
+        return this.plans;
+      } catch (e: unknown) {
+        if (axios.isAxiosError(e)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const message = (e.response?.data as any)?.message ?? e.message;
+          this.error = message;
+          toast.error(`Gagal memuat plan by service: ${message}`);
+        } else {
+          this.error = e instanceof Error ? e.message : 'Unknown error';
+          toast.error(`Gagal memuat plan by service: ${this.error}`);
+        }
+        return [];
+      } finally {
+        this.loading = false;
+      }
+    },
+    
   },
 });

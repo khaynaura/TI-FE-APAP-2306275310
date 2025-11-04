@@ -42,7 +42,7 @@ const handleBlur = (e: FocusEvent) => {
 const computedError = computed(() => {
   if (props.errorMessage) return props.errorMessage
   const val = (props.modelValue ?? '').toString().trim()
-  if (props.required && touched.value && val === '') return 'This field is required'
+  if (props.required && touched.value && val === '') return ''
   if (props.validate && touched.value) {
     const msg = props.validate(props.modelValue ?? '')
     if (msg) return msg

@@ -155,7 +155,7 @@ onMounted(async () => {
       <!-- Actions -->
       <div class="flex justify-end gap-3 pt-8">
         <VButton @click="router.push('/insurance-plan')" variant="secondary" size="lg">
-          Kembali
+          Back
         </VButton>
       </div>
     </div>
