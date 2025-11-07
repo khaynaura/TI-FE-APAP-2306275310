@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'vue-sonner';
 import type { InsurancePlan, InsurancePlanRequest } from '@/interfaces/insurances.interface';
 import type { CommonResponseInterface } from '@/interfaces/common.response.interface';
+import { getApiErrorMessage } from '@/utils/api-error';
 
 const baseInsurancePlanUrl = `${import.meta.env.VITE_API_URL}/insurance-plan`;
 
@@ -30,8 +31,9 @@ export const useInsurancePlanStore = defineStore('insurancePlan', {
         }
         return this.plans;
       } catch (e) {
-        this.error = e instanceof Error ? e.message : 'Unknown error';
-        toast.error(`Gagal memuat Insurance Plan${search ? ` (search="${search}")` : ''}: ${this.error}`);
+        const msg = getApiErrorMessage(e);
+        this.error = msg;
+        toast.error(`Gagal memuat Insurance Plan${search ? ` (search="${search}")` : ''}: ${msg}`);
         return [];
       } finally {
         this.loading = false;
@@ -45,8 +47,9 @@ export const useInsurancePlanStore = defineStore('insurancePlan', {
         const res = await axios.get<CommonResponseInterface<InsurancePlan>>(`${baseInsurancePlanUrl}/${id}`);
         return res.data.data ?? null;
       } catch (e) {
-        this.error = e instanceof Error ? e.message : 'Unknown error';
-        toast.error(`Gagal memuat plan: ${this.error}`);
+        const msg = getApiErrorMessage(e);
+        this.error = msg;
+        toast.error(`Gagal memuat plan: ${msg}`);
         return null;
       } finally {
         this.loading = false;
@@ -67,11 +70,11 @@ export const useInsurancePlanStore = defineStore('insurancePlan', {
           toast.success('Insurance Plan berhasil dibuat');
           return created;
         }
-        if (res.status === 400) toast.warning('Gagal membuat plan: Data tidak valid');
         return null;
       } catch (e) {
-        this.error = e instanceof Error ? e.message : 'Unknown error';
-        toast.error(`Error saat membuat plan: ${this.error}`);
+        const msg = getApiErrorMessage(e);
+        this.error = msg;
+        toast.error(msg);
         return null;
       } finally {
         this.loading = false;
@@ -93,12 +96,11 @@ export const useInsurancePlanStore = defineStore('insurancePlan', {
           toast.success('Insurance Plan berhasil diperbarui');
           return updated;
         }
-        if (res.status === 400) toast.warning('Gagal memperbarui plan: Data tidak valid');
-        if (res.status === 404) toast.warning('Plan tidak ditemukan');
         return null;
       } catch (e) {
-        this.error = e instanceof Error ? e.message : 'Unknown error';
-        toast.error(`Error saat memperbarui plan: ${this.error}`);
+        const msg = getApiErrorMessage(e);
+        this.error = msg;
+        toast.error(msg);
         return null;
       } finally {
         this.loading = false;
@@ -117,12 +119,11 @@ export const useInsurancePlanStore = defineStore('insurancePlan', {
           toast.success('Insurance Plan berhasil dihapus');
           return true;
         }
-        if (res.status === 404) toast.warning('Plan tidak ditemukan');
-        if (res.status === 400) toast.warning(res.data?.message ?? 'Gagal menghapus plan');
         return false;
       } catch (e) {
-        this.error = e instanceof Error ? e.message : 'Unknown error';
-        toast.error(`Error saat menghapus plan: ${this.error}`);
+        const msg = getApiErrorMessage(e);
+        this.error = msg;
+        toast.error(msg);
         return false;
       } finally {
         this.loading = false;
@@ -145,20 +146,14 @@ export const useInsurancePlanStore = defineStore('insurancePlan', {
         }
         return this.plans;
       } catch (e: unknown) {
-        if (axios.isAxiosError(e)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const message = (e.response?.data as any)?.message ?? e.message;
-          this.error = message;
-          toast.error(`Gagal memuat plan by service: ${message}`);
-        } else {
-          this.error = e instanceof Error ? e.message : 'Unknown error';
-          toast.error(`Gagal memuat plan by service: ${this.error}`);
-        }
+        const msg = getApiErrorMessage(e);
+        this.error = msg;
+        toast.error(`Gagal memuat plan by service: ${msg}`);
         return [];
       } finally {
         this.loading = false;
       }
     },
-    
+
   },
 });

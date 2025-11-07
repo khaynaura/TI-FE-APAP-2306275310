@@ -8,6 +8,7 @@ import type {
   CreateClaimRequest,
   ProcessClaimRequest,
 } from '@/interfaces/claim.interface';
+import { getApiErrorMessage } from '@/utils/api-error';
 
 const baseClaimUrl = `${import.meta.env.VITE_API_URL}/claim`;
 
@@ -38,15 +39,9 @@ export const useClaimStore = defineStore('claim', {
         }
         return this.list;
       } catch (e: unknown) {
-        if (axios.isAxiosError(e)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const message = (e.response?.data as any)?.message ?? e.message;
-          this.error = message;
-          toast.error(`Gagal memuat claim: ${message}`);
-        } else {
-          this.error = e instanceof Error ? e.message : 'Unknown error';
-          toast.error(`Gagal memuat claim: ${this.error}`);
-        }
+        const msg = getApiErrorMessage(e);
+        this.error = msg;
+        toast.error(msg);
         return [];
       } finally {
         this.loading = false;
@@ -66,18 +61,12 @@ export const useClaimStore = defineStore('claim', {
         }
         return this.detail;
       } catch (e: unknown) {
-        if (axios.isAxiosError(e)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const message = (e.response?.data as any)?.message ?? e.message;
-          this.error = message;
-          if (e.response?.status === 404) {
-            toast.warning(message || 'Claim tidak ditemukan');
-          } else {
-            toast.error(`Gagal memuat detail claim: ${message}`);
-          }
+        const msg = getApiErrorMessage(e);
+        this.error = msg;
+        if (axios.isAxiosError(e) && e.response?.status === 404) {
+          toast.warning(msg || 'Claim tidak ditemukan');
         } else {
-          this.error = e instanceof Error ? e.message : 'Unknown error';
-          toast.error(`Gagal memuat detail claim: ${this.error}`);
+          toast.error(msg);
         }
         this.detail = null;
         return null;
@@ -99,18 +88,11 @@ export const useClaimStore = defineStore('claim', {
           toast.success('Claim berhasil diajukan');
           return this.detail;
         }
-        if (res.status === 400) toast.warning(res.data?.message ?? 'Gagal mengajukan claim');
         return null;
       } catch (e: unknown) {
-        if (axios.isAxiosError(e)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const message = (e.response?.data as any)?.message ?? e.message;
-          this.error = message;
-          toast.error(`Gagal mengajukan claim: ${message}`);
-        } else {
-          this.error = e instanceof Error ? e.message : 'Unknown error';
-          toast.error(`Gagal mengajukan claim: ${this.error}`);
-        }
+        const msg = getApiErrorMessage(e);
+        this.error = msg;
+        toast.error(msg);
         return null;
       } finally {
         this.loading = false;
@@ -130,18 +112,11 @@ export const useClaimStore = defineStore('claim', {
           toast.success('Claim berhasil diproses');
           return this.detail;
         }
-        if (res.status === 400) toast.warning(res.data?.message ?? 'Gagal memproses claim');
         return null;
       } catch (e: unknown) {
-        if (axios.isAxiosError(e)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const message = (e.response?.data as any)?.message ?? e.message;
-          this.error = message;
-          toast.error(`Gagal memproses claim: ${message}`);
-        } else {
-          this.error = e instanceof Error ? e.message : 'Unknown error';
-          toast.error(`Gagal memproses claim: ${this.error}`);
-        }
+        const msg = getApiErrorMessage(e);
+        this.error = msg;
+        toast.error(msg);
         return null;
       } finally {
         this.loading = false;

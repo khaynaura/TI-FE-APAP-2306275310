@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'vue-sonner';
 import type { CommonResponseInterface } from '@/interfaces/common.response.interface';
 import type { OrderedPlanDetailResponse } from '@/interfaces/orderedplan.interface';
+import { getApiErrorMessage } from '@/utils/api-error';
 
 const baseOrderedPlanUrl = `${import.meta.env.VITE_API_URL}/ordered-plan`;
 
@@ -29,18 +30,12 @@ export const useOrderedPlanStore = defineStore('orderedPlan', {
         }
         return this.detail;
       } catch (e: unknown) {
-        if (axios.isAxiosError(e)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const message = (e.response?.data as any)?.message ?? e.message;
-          this.error = message;
-          if (e.response?.status === 404) {
-            toast.warning(message || 'Ordered Plan tidak ditemukan');
-          } else {
-            toast.error(`Gagal memuat Ordered Plan: ${message}`);
-          }
+        const msg = getApiErrorMessage(e);
+        this.error = msg;
+        if (axios.isAxiosError(e) && e.response?.status === 404) {
+          toast.warning(msg || 'Ordered Plan tidak ditemukan');
         } else {
-          this.error = e instanceof Error ? e.message : 'Unknown error';
-          toast.error(`Gagal memuat Ordered Plan: ${this.error}`);
+          toast.error(msg); // tampilkan persis pesan backend
         }
         this.detail = null;
         return null;

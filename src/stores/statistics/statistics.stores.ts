@@ -3,6 +3,7 @@ import axios from 'axios'
 import { toast } from 'vue-sonner'
 import type { CommonResponseInterface } from '@/interfaces/common.response.interface'
 import type { HomeSummary, ChartData } from '@/interfaces/statistics.interafce'
+import { getApiErrorMessage } from '@/utils/api-error' // ← tambah
 
 const baseStatisticsUrl = `${import.meta.env.VITE_API_URL}/statistics`
 
@@ -38,30 +39,21 @@ export const useStatisticsStore = defineStore('statistics', {
 
                 return this.summary
             } catch (err: unknown) {
-                let msg = 'Unknown error'
-
-                if (axios.isAxiosError(err)) {
-                    const resp = err.response?.data as Partial<CommonResponseInterface<unknown>> | undefined
-                    msg = (resp?.message as string) ?? err.message ?? msg
-                } else if (err instanceof Error) {
-                    msg = err.message
-                }
-
+                const msg = getApiErrorMessage(err) // ← gunakan util
                 this.error = msg
                 this.summary = null
-                toast.error(`Error saat memuat statistik: ${this.error}`)
+                toast.error(msg) // tampilkan persis pesan backend
                 return null
             } finally {
                 this.loading = false
             }
         },
 
-
         async fetchChartData(
           period: number,
           service: string,
           force = false
-      ): Promise<ChartData | null> {
+        ): Promise<ChartData | null> {
           const key = `${service}::${period}`
           if (this.chartDataCache[key] && !this.chartError && !force) {
               return this.chartDataCache[key]
@@ -87,17 +79,9 @@ export const useStatisticsStore = defineStore('statistics', {
                   return null
               }
           } catch (err: unknown) {
-              let msg = 'Unknown error'
-
-              if (axios.isAxiosError(err)) {
-                  const resp = err.response?.data as Partial<CommonResponseInterface<unknown>> | undefined
-                  msg = (resp?.message as string) ?? err.message ?? msg
-              } else if (err instanceof Error) {
-                  msg = err.message
-              }
-
+              const msg = getApiErrorMessage(err) // ← gunakan util
               this.chartError = msg
-              toast.error(`Error saat memuat data chart: ${this.chartError}`)
+              toast.error(msg) // tampilkan persis pesan backend
               return null
           } finally {
               this.chartLoading = false
