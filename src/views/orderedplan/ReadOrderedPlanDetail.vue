@@ -47,22 +47,13 @@ const formatLocalDate = (value?: string | null) => {
   return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: '2-digit' });
 };
 
-// Title case for status text
 const formatStatus = (s?: string | null) =>
   String(s ?? '')
     .replace(/_/g, ' ')
     .toLowerCase()
     .replace(/\b\w/g, c => c.toUpperCase());
 
-/**
- * Variant for OrderedPlan status (box on top)
- * - WAITING_FOR_REVIEW -> info (blue)
- * - CLAIMED -> purple
- * - ORDERED -> warning (yellow)
- * - REJECTED -> danger (red)
- * - EXPIRED -> secondary (gray)
- * - PAID -> success (green)
- */
+
 const statusVariant = (s?: string | null) => {
   const v = (s ?? '').toUpperCase();
   if (v === 'PAID') return 'success';
@@ -74,25 +65,21 @@ const statusVariant = (s?: string | null) => {
   return 'secondary';
 };
 
-// Claims list
 const claims = computed<ClaimSummaryResponse[]>(() => plan.value?.claims ?? []);
 
-// Show Detail button only for accepted/rejected claims
 const hasDetailButton = (s: string) => {
   const v = (s ?? '').toUpperCase();
   return v === 'ACCEPTED' || v === 'REJECTED';
 };
 
-// Variant mapping for Claim.status in the DataTable badges
 const claimStatusVariant = (s?: string | null) => {
   const v = (s ?? '').toUpperCase();
-  if (v === 'WAITING_FOR_REVIEW') return 'info';   // blue
-  if (v === 'ACCEPTED') return 'success';          // green
-  if (v === 'REJECTED') return 'danger';           // red
-  return 'secondary';                              // gray (fallback)
+  if (v === 'WAITING_FOR_REVIEW') return 'info';
+  if (v === 'ACCEPTED') return 'success';
+  if (v === 'REJECTED') return 'danger';
+  return 'secondary';
 };
 
-// Badge classes for Claims DataTable
 const claimBadgeClass = (s?: string | null) => {
   switch (claimStatusVariant(s)) {
     case 'success': return 'bg-green-100 text-green-700';
@@ -186,7 +173,6 @@ const closeModal = () => {
   claimDetail.value = null;
 };
 
-// Navigate to submit claim page
 const goToSubmitClaim = () => {
   if (!plan.value) return;
   router.push({ name: 'claim-add', params: { id: plan.value.id } });
@@ -198,7 +184,6 @@ onMounted(fetchOrderedPlan);
 <template>
   <main class="w-full min-h-screen">
     <div class="px-8 py-8">
-      <!-- Header -->
       <div class="flex items-start justify-between gap-4">
         <div>
           <h1 class="text-3xl font-extrabold text-gray-900 title-bold">Ordered Plan Details</h1>

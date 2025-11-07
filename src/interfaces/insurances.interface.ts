@@ -1,4 +1,4 @@
-import type { ServiceEnum } from '@/stores/enums.stores.ts'; // <-- Diambil dari store yang baru dibuat
+import type { ServiceEnum } from '@/stores/enums.stores.ts'; 
 
 export interface InsurancePlan {
     id: string;

@@ -34,12 +34,12 @@ import { RouterLink } from 'vue-router'
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 60px; /* Tinggi navbar */
+  height: 60px;
 }
 .nav-brand {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #f97316; /* Warna oranye seperti di screenshot */
+  color: #f97316;
   text-decoration: none;
 }
 .nav-links {
@@ -57,7 +57,7 @@ import { RouterLink } from 'vue-router'
 .nav-link:hover {
   color: #1e293b;
 }
-/* Style untuk link yang sedang aktif */
+
 .nav-link.router-link-exact-active {
   color: #1e293b;
   border-bottom-color: #f97316;

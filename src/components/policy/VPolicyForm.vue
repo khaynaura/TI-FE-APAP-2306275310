@@ -23,12 +23,10 @@ const props = defineProps({
 
 const model = toRefs(props).policyModel;
 
-// Store: ambil plans berdasarkan service
 const insurancePlanStore = useInsurancePlanStore();
 const { plans } = storeToRefs(insurancePlanStore);
 const loadingPlans = computed(() => insurancePlanStore.loading);
 
-// State lokal
 const error = ref<string | null>(null);
 const isSubmitting = ref(false);
 const services: { value: ServiceEnum; label: string }[] = [
@@ -38,7 +36,6 @@ const services: { value: ServiceEnum; label: string }[] = [
   { value: 'RENTALS' as ServiceEnum, label: 'Rentals' },
 ];
 
-// Helpers
 const formatServiceName = (s?: string) =>
   (s ?? '')
     .replace(/_/g, ' ')
@@ -85,7 +82,6 @@ const removePlanRow = (idx: number) => {
 };
 
 const onChangePlan = (idx: number, id: string) => {
-  // Jika duplikat terpilih, kosongkan pilihan ini
   const dupIndex = model.value.insurancePlanIds.findIndex((v, i) => v === id && i !== idx);
   if (dupIndex !== -1) {
     model.value.insurancePlanIds[idx] = '';
@@ -94,7 +90,6 @@ const onChangePlan = (idx: number, id: string) => {
   }
 };
 
-// Validasi sederhana
 const validate = (): string | null => {
   if (!model.value.userId?.trim()) return 'User ID wajib diisi.';
   if (!model.value.bookingId?.trim()) return 'Booking ID wajib diisi.';
@@ -130,7 +125,6 @@ const handleSubmit = async () => {
       <p class="text-sm">{{ error }}</p>
     </div>
 
-    <!-- Booking ID & User ID -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <VInput
         v-model="model.bookingId"
@@ -150,7 +144,6 @@ const handleSubmit = async () => {
       />
     </div>
 
-    <!-- Service -->
     <div class="flex flex-col gap-1">
       <label for="service" class="block text-sm text-gray-700 title-bold">Service <span class="text-red-600">*</span></label>
       <select
@@ -169,7 +162,6 @@ const handleSubmit = async () => {
       <p v-if="model.service && loadingPlans" class="text-xs text-slate-500 mt-1">Loading plans...</p>
     </div>
 
-    <!-- Insurance Plans -->
     <div class="flex flex-col gap-2">
       <div class="flex items-center justify-between">
         <label class="block text-sm text-gray-700 title-bold">Insurance Plans <span class="text-red-600">*</span></label>
@@ -214,7 +206,6 @@ const handleSubmit = async () => {
       </div>
     </div>
 
-    <!-- Actions -->
     <div class="flex justify-end gap-3 pt-4">
       <VButton type="button" variant="secondary" class="px-6 py-2" :disabled="isSubmitting" @click="$router.back()">
         Cancel

@@ -31,7 +31,6 @@ const servicesError = computed(() =>
     : null
 )
 
-// Computed to check if we're in edit mode
 const isEditMode = computed(() => model.value.id && model.value.id.trim() !== '')
 
 const emit = defineEmits(['update:modelValue'])

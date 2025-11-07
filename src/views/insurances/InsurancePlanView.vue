@@ -43,12 +43,11 @@ const formatServiceName = (service: string) => {
     .join(' ');
 };
 
-// --- Navigasi ---
 const goToAddPlan = () => router.push('/insurance-plan/create');
 const goToViewPlan = (id: string) => router.push(`/insurance-plan/${id}`);
 const goToEditPlan = (id: string) => router.push(`/insurance-plan/update/${id}`);
 
-// --- Definisi Columns untuk TanStack Table ---
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const columns: ColumnDef<any>[] = [
   {
@@ -136,7 +135,7 @@ const columns: ColumnDef<any>[] = [
   },
 ];
 
-// --- Logika ---
+
 const fetchData = async () => {
   isLoading.value = true;
   try {
@@ -154,7 +153,6 @@ onMounted(() => {
   fetchData();
 });
 
-// Debounce untuk search
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 watch(searchQuery, () => {
   if (searchTimeout) clearTimeout(searchTimeout);
@@ -200,7 +198,7 @@ onUnmounted(() => {
           class="w-full"
           :loading="isLoading"
         >
-          <!-- Search diletakkan di toolbar kiri agar sejajar dengan entries per page -->
+
           <template #toolbar-left>
             <label for="search" class="text-sm font-medium text-gray-700 whitespace-nowrap">Search:</label>
             <div class="relative w-72">

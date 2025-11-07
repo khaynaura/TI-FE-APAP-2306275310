@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-// ...existing code...
+
 // import { format } from 'date-fns'
 import VButton from '@/components/common/VButton.vue'
 import VFieldDisplay from '@/components/common/VFieldDisplay.vue'
@@ -34,7 +34,6 @@ const deletePlan = async () => {
 }
 
 
-// label untuk services (agar tampil sebagai chip)
 const serviceLabels: Record<string, string> = {
   ACCOMMODATION: 'Accommodation',
   FLIGHT: 'Flight',
@@ -57,7 +56,6 @@ onMounted(async () => {
 <template>
   <main class="w-full min-h-screen">
     <div class="px-8 py-8">
-      <!-- Header -->
       <div class="flex items-start justify-between gap-4">
                 <div>
                   <h1 class="text-3xl font-extrabold text-gray-900 title-bold">Insurance Plan Details</h1>
@@ -135,7 +133,6 @@ onMounted(async () => {
         </section>
 
         <hr class="border-gray-200 custom-margin2" />
-        <!-- Applicable Services -->
         <section>
           <h3 class="text-l font-black text-gray-900 section-bold">Applicable Services</h3>
           <hr class="border-gray-200 custom-margin2" />
@@ -152,7 +149,6 @@ onMounted(async () => {
         </section>
       </div>
 
-      <!-- Actions -->
       <div class="flex justify-end gap-3 pt-8">
         <VButton @click="router.push('/insurance-plan')" variant="secondary" size="lg">
           Back
@@ -162,14 +158,13 @@ onMounted(async () => {
 
     <teleport to="body">
   <div v-if="showDeleteModal" class="fixed inset-0 z-[1000] flex items-center justify-center">
-    <!-- Backdrop abu-abu tanpa blur -->
+
     <div
       class="absolute inset-0 bg-black/50"
       @click="!isDeleting && (showDeleteModal = false)"
     ></div>
 
     <div class="relative z-10 w-[400px] rounded-xl bg-white p-8 shadow-xl">
-      <!-- Icon container - centered -->
       <div class="flex justify-center mb-5">
         <div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,17 +173,14 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Title -->
       <h2 class="text-center text-lg text-gray-900 section-bold">Delete Insurance Plan</h2>
       <hr class="border-gray-100 custom-margin2" />
-      <!-- Description -->
       <p class="text-center text-sm text-gray-600 mb-8">
         Are you sure you want to delete
         <span class="title-bold">"{{ plan?.planName }}"</span>? This action cannot be undone.
       </p>
 
       <hr class="border-gray-100 custom-margin2" />
-      <!-- Buttons -->
       <div class="flex justify-center gap-3">
         <VButton variant="secondary" size="md" :disabled="isDeleting" @click="showDeleteModal = false">
           Cancel

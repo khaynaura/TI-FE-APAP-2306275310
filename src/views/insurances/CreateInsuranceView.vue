@@ -25,7 +25,6 @@ const createInsurance = async (bodyRequest: InsurancePlanRequest) => {
       router.push('/insurance-plan')
     }
   } catch (error) {
-    // Re-throw error so VInsuranceForm can handle it
     throw error
   }
 }
@@ -33,7 +32,6 @@ const createInsurance = async (bodyRequest: InsurancePlanRequest) => {
 
 <template>
   <main class="w-full min-h-screen">
-    <!-- Form content langsung tanpa container -->
     <div class="px-8 py-8">
       <h1 class="text-3xl font-extrabold text-gray-800 mb-2 title-bold">Create Insurance Plan</h1>
       <p class="text-gray-600 mb-8">Add a new insurance plan to the system</p>

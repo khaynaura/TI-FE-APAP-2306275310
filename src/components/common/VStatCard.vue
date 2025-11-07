@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Komponen ini menerima props (data) dari parent-nya
+
 defineProps<{
   title: string
   value: number | string
@@ -8,12 +8,10 @@ defineProps<{
 </script>
 <template>
   <div class="stat-card">
-    <!-- Bagian Icon di ATAS -->
     <div class="stat-icon-wrapper">
       <slot name="icon">📄</slot>
     </div>
 
-    <!-- Bagian Teks di BAWAH -->
     <div class="stat-content">
       <p class="stat-title">{{ title }}</p>
       <span class="stat-value">{{ value }}</span>
@@ -29,9 +27,9 @@ defineProps<{
   border-radius: 8px;
   padding: 1.5rem;
   display: flex;
-  flex-direction: column; /* Ubah ke column supaya vertikal */
+  flex-direction: column;
   align-items: flex-start;
-  gap: 1rem; /* Jarak antara icon dan konten */
+  gap: 1rem; 
 }
 
 .stat-icon-wrapper {
