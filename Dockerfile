@@ -5,7 +5,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# --- BAGIAN PENTING (JANGAN DIHAPUS) ---
+
 # Ini gunanya supaya Frontend tau alamat Backend kamu
 ARG VITE_API_URL
 # ARG VITE_BE2_API_URL
