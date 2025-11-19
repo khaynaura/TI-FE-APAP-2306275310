@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions:checkout@v4
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -53,10 +53,12 @@ jobs:
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Build Docker image
+      # Perbaikan utama ada di sini: Menggunakan URL API backend secara eksplisit.
+      - name: Build Docker image (with hardcoded API URL)
         run: |
-          docker build \
-            --build-arg VITE_API_URL=$VITE_API_URL \
+          # VITE_API_URL disetel ke nilai yang Anda minta untuk di-build ke dalam image Docker.
+          docker build --no-cache \
+            --build-arg VITE_API_URL=http://2306275310-be.hafizmuh.site/api \
             -t $DOCKER_IMAGE_NAME:$IMAGE_TAG .
 
       - name: Push Docker image
@@ -67,7 +69,8 @@ jobs:
     needs: docker-push
 
     steps:
-      - name: Checkout again
+      # Menghapus step 'Checkout again' karena tidak diperlukan.
+      - name: Checkout k8s files
         uses: actions/checkout@v4
 
       - name: Setup SSH client
