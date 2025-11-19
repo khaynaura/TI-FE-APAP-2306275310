@@ -1,16 +1,17 @@
-import { defineStore } from 'pinia';
-import axios from 'axios';
-import { toast } from 'vue-sonner';
-import type { CommonResponseInterface } from '@/interfaces/common.response.interface';
+import { defineStore } from 'pinia'
+import axios from 'axios'
+import { toast } from 'vue-sonner'
+import type { CommonResponseInterface } from '@/interfaces/common.response.interface'
 import type {
   ClaimSummaryResponse,
   ClaimDetailResponse,
   CreateClaimRequest,
   ProcessClaimRequest,
-} from '@/interfaces/claim.interface';
-import { getApiErrorMessage } from '@/utils/api-error';
+} from '@/interfaces/claim.interface'
+import { getApiErrorMessage } from '@/utils/api-error'
 
-const baseClaimUrl = `${import.meta.env.VITE_API_URL}/claim`;
+// coba
+const baseClaimUrl = `${import.meta.env.VITE_API_URL}/claim`
 
 export const useClaimStore = defineStore('claim', {
   state: () => ({
@@ -21,113 +22,124 @@ export const useClaimStore = defineStore('claim', {
   }),
 
   actions: {
-    async fetchAllFiltered(params?: { status?: string; planId?: string }): Promise<ClaimSummaryResponse[]> {
-      this.loading = true;
-      this.error = null;
+    async fetchAllFiltered(params?: {
+      status?: string
+      planId?: string
+    }): Promise<ClaimSummaryResponse[]> {
+      this.loading = true
+      this.error = null
       try {
         const res = await axios.get<CommonResponseInterface<ClaimSummaryResponse[]>>(baseClaimUrl, {
           params: {
             status: params?.status?.trim() || undefined,
             planId: params?.planId?.trim() || undefined,
           },
-        });
-        this.list = res.data.data ?? [];
+        })
+        this.list = res.data.data ?? []
         if (this.list.length === 0) {
-          toast.warning('Tidak ada claim sesuai filter');
+          toast.warning('Tidak ada claim sesuai filter')
         } else {
-          toast.success('Data Claim dimuat');
+          toast.success('Data Claim dimuat')
         }
-        return this.list;
+        return this.list
       } catch (e: unknown) {
-        const msg = getApiErrorMessage(e);
-        this.error = msg;
-        toast.error(msg);
-        return [];
+        const msg = getApiErrorMessage(e)
+        this.error = msg
+        toast.error(msg)
+        return []
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
     async getById(id: string): Promise<ClaimDetailResponse | null> {
-      this.loading = true;
-      this.error = null;
+      this.loading = true
+      this.error = null
       try {
-        const res = await axios.get<CommonResponseInterface<ClaimDetailResponse>>(`${baseClaimUrl}/${id}`);
-        this.detail = res.data.data ?? null;
+        const res = await axios.get<CommonResponseInterface<ClaimDetailResponse>>(
+          `${baseClaimUrl}/${id}`,
+        )
+        this.detail = res.data.data ?? null
         if (this.detail) {
-          toast.success('Detail Claim dimuat');
+          toast.success('Detail Claim dimuat')
         } else {
-          toast.warning('Claim tidak ditemukan');
+          toast.warning('Claim tidak ditemukan')
         }
-        return this.detail;
+        return this.detail
       } catch (e: unknown) {
-        const msg = getApiErrorMessage(e);
-        this.error = msg;
+        const msg = getApiErrorMessage(e)
+        this.error = msg
         if (axios.isAxiosError(e) && e.response?.status === 404) {
-          toast.warning(msg || 'Claim tidak ditemukan');
+          toast.warning(msg || 'Claim tidak ditemukan')
         } else {
-          toast.error(msg);
+          toast.error(msg)
         }
-        this.detail = null;
-        return null;
+        this.detail = null
+        return null
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
-    async submitClaim(orderedPlanId: string, payload: CreateClaimRequest): Promise<ClaimDetailResponse | null> {
-      this.loading = true;
-      this.error = null;
+    async submitClaim(
+      orderedPlanId: string,
+      payload: CreateClaimRequest,
+    ): Promise<ClaimDetailResponse | null> {
+      this.loading = true
+      this.error = null
       try {
         const res = await axios.post<CommonResponseInterface<ClaimDetailResponse>>(
           `${baseClaimUrl}/submit/${orderedPlanId}`,
-          payload
-        );
+          payload,
+        )
         if (res.status === 201) {
-          this.detail = res.data.data ?? null;
-          toast.success('Claim berhasil diajukan');
-          return this.detail;
+          this.detail = res.data.data ?? null
+          toast.success('Claim berhasil diajukan')
+          return this.detail
         }
-        return null;
+        return null
       } catch (e: unknown) {
-        const msg = getApiErrorMessage(e);
-        this.error = msg;
-        toast.error(msg);
-        return null;
+        const msg = getApiErrorMessage(e)
+        this.error = msg
+        toast.error(msg)
+        return null
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
-    async processClaim(claimId: string, payload: ProcessClaimRequest): Promise<ClaimDetailResponse | null> {
-      this.loading = true;
-      this.error = null;
+    async processClaim(
+      claimId: string,
+      payload: ProcessClaimRequest,
+    ): Promise<ClaimDetailResponse | null> {
+      this.loading = true
+      this.error = null
       try {
         const res = await axios.put<CommonResponseInterface<ClaimDetailResponse>>(
           `${baseClaimUrl}/process/${claimId}`,
-          payload
-        );
+          payload,
+        )
         if (res.status === 200) {
-          this.detail = res.data.data ?? null;
-          toast.success('Claim berhasil diproses');
-          return this.detail;
+          this.detail = res.data.data ?? null
+          toast.success('Claim berhasil diproses')
+          return this.detail
         }
-        return null;
+        return null
       } catch (e: unknown) {
-        const msg = getApiErrorMessage(e);
-        this.error = msg;
-        toast.error(msg);
-        return null;
+        const msg = getApiErrorMessage(e)
+        this.error = msg
+        toast.error(msg)
+        return null
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
     reset() {
-      this.list = [];
-      this.detail = null;
-      this.loading = false;
-      this.error = null;
+      this.list = []
+      this.detail = null
+      this.loading = false
+      this.error = null
     },
   },
-});
+})
