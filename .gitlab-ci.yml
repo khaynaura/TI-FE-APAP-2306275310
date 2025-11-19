@@ -1,0 +1,77 @@
+stages:
+  - build
+  - docker-push
+  - deploy
+
+variables:
+  # GANTI DENGAN NAMA IMAGE DOCKER HUB FE KAMU
+  DOCKER_IMAGE_NAME: ${DOCKER_IMAGE_NAME}
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+  
+
+# --- STAGE 1: BUILD ---
+build:
+  stage: build
+  image: node:20
+  script:
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 hour
+
+# --- STAGE 2: DOCKER PUSH ---
+docker-push:
+  stage: docker-push
+  image: docker:latest
+  services:
+    - docker:dind
+  dependencies:
+    - build
+  before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  script:
+    # Build dengan membawa Environment Variables VITE
+    - docker build \
+      --build-arg VITE_API_URL=$VITE_API_URL \
+      -t $DOCKER_IMAGE_NAME:$IMAGE_TAG .
+    - docker push $DOCKER_IMAGE_NAME:$IMAGE_TAG
+  only:
+    # Ubah branch ini jika kamu menggunakan branch CI/CD yang berbeda
+    - feat/tutorial-9
+
+# --- STAGE 3: DEPLOY ---
+deploy:
+  stage: deploy
+  image: alpine:latest
+  dependencies:
+    - docker-push
+  before_script:
+    # Setup SSH Access
+    - apk add --no-cache openssh bash
+    - mkdir -p ~/.ssh
+    - echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+  script:
+    # 1. Update Tag Image di Deployment YAML
+    - sed "s|REPLACE_ME_TAG|$IMAGE_TAG|g" k8s/deployment.yaml > deployment.yaml
+
+    # 2. Copy file K8S ke folder spesifik FE di server
+    - ssh $EC2_USER@$EC2_HOST "mkdir -p ~/app/insurance-2306275310-fe/k8s"
+    - scp deployment.yaml $EC2_USER@$EC2_HOST:~/app/insurance-2306275310-fe/k8s/deployment.yaml
+    - scp k8s/service.yaml $EC2_USER@$EC2_HOST:~/app/insurance-2306275310-fe/k8s/service.yaml
+    - scp k8s/ingress.yaml $EC2_USER@$EC2_HOST:~/app/insurance-2306275310-fe/k8s/ingress.yaml
+
+    # 3. Apply konfigurasi di K3S dan cek status rollout
+    - |
+      ssh $EC2_USER@$EC2_HOST "
+        # Apply semua file YAML dari folder FE
+        sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml kubectl apply -f ~/app/insurance-2306275310-fe/k8s/ &&
+        # Cek status rollout deployment FE (nama deployment FE: insurance-2306275310-fe)
+        sudo k3s kubectl rollout status deployment/insurance-2306275310-fe -n default
+      "
+  only:
+    # Jika kamu pakai 'feat/tutorial-9', ganti 'main' di atas
+    - feat/tutorial-9

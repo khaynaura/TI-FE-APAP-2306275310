@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insurance-2306275310-fe
+  labels:
+    app: insurance-2306275310-fe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: insurance-2306275310-fe
+  template:
+    metadata:
+      labels:
+        app: insurance-2306275310-fe
+    spec:
+      containers:
+        - name: frontend-container
+          # PASTIKAN INI DIGANTI DENGAN IMAGE DOCKER HUB FE KAMU
+          image: khaylanaura/insurance-fe:REPLACE_ME_TAG
+          ports:
+            - containerPort: 80 # Standar untuk Nginx/FE
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
